@@ -1,0 +1,93 @@
+/**
+ * Web chord handler for Chromium-family browsers. The generated JavaScript is sent to the
+ * frontmost browser by `src/ffi/web/web.swift`; this file only builds commands and binds its C ABI
+ * through Bun FFI.
+ */
+import { CString, dlopen, FFIType } from "bun:ffi";
+import { resolveFfiPath } from "chord";
+import jquery from "jquery-as-string";
+import outdent from "outdent";
+
+type Args =
+  | [type: "placeholder", input: string]
+  | [type: "selection-start", input: string]
+  | [type: "selection-end", input: string]
+  | [type: "link", input: string]
+  | [type: "button", input: string]
+  | [type: "scroll", direction: "north" | "south" | "east" | "west"];
+
+type WebLibrary = ReturnType<typeof openWebLibrary>;
+
+let library: WebLibrary | undefined;
+
+function openWebLibrary() {
+  return dlopen(resolveFfiPath(import.meta, "web"), {
+    chordsWebRunJavaScript: {
+      args: [FFIType.cstring],
+      returns: FFIType.ptr,
+    },
+    chordsWebFree: {
+      args: [FFIType.ptr],
+      returns: FFIType.void,
+    },
+  });
+}
+
+/** NUL-terminated UTF-8 for a `cstring` argument. */
+function cstr(value: string): Buffer {
+  return Buffer.from(`${value}\0`, "utf8");
+}
+
+export function runWebJavaScript(source: string): void {
+  library ??= openWebLibrary();
+  const error = library.symbols.chordsWebRunJavaScript(cstr(source));
+  if (error) {
+    const message = new CString(error).toString();
+    library.symbols.chordsWebFree(error);
+    throw new Error(message);
+  }
+}
+
+export default function buildHandler() {
+  return async function handler(...args: Args) {
+    const javascript = `${jquery};\n${getJavascript(...args)}`;
+
+    // Preserve the previous handler's page environment: it injected jQuery once around the
+    // generated payload and once inside it.
+    runWebJavaScript(`${jquery};\n${javascript}`);
+  };
+}
+
+function getJavascript(...args: Args): string {
+  const type = args[0];
+  switch (type) {
+    case "scroll": {
+      const direction = args[1];
+      return outdent`
+        window.scrollBy({
+          top: ${direction === "north" ? -100 : direction === "south" ? 100 : 0},
+          left: ${direction === "east" ? 100 : direction === "west" ? -100 : 0},
+          behavior: 'smooth'
+        });
+      `;
+    }
+
+    case "placeholder": {
+      const input = args[1];
+      if (input.endsWith(".")) {
+        return outdent`
+          $('input[placeholder="${input}" i]').focus();
+        `;
+      }
+
+      if (input.endsWith(",")) {
+        // TODO: need a native event for a true right click.
+        return "";
+      }
+    }
+
+    default: {
+      return `console.log('unhandled type ${type}')`;
+    }
+  }
+}

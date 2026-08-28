@@ -1,0 +1,13 @@
+{
+  "name": "@keychord/chords-web",
+  "type": "module",
+  "dependencies": {
+    "jquery-as-string": "^0.4.0",
+    "outdent": "^0.8.0"
+  },
+  "devDependencies": {
+    "@keychord/config": "catalog:",
+    "@keychord/tsconfig": "catalog:",
+    "@types/bun": "latest"
+  }
+}
