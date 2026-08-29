@@ -1,5 +1,4 @@
-import { CString, FFIType, dlopen } from "bun:ffi";
-import { resolveFfiPath } from "chord";
+import { resolveNativeModulePath } from "chord";
 //#region \0rolldown/runtime.js
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -29,8 +28,8 @@ var jquery_min_default = "/*! jQuery v4.0.0 | (c) OpenJS Foundation and other co
 //#region src/js/web.ts
 /**
 * Web chord handler for Chromium-family browsers. The generated JavaScript is sent to the
-* frontmost browser by `src/ffi/web/web.swift`; this file only builds commands and binds its C ABI
-* through Bun FFI.
+* frontmost browser by `src/swift/web/web.swift`; this file builds commands and calls its
+* NodeSwift addon through Node-API.
 */
 var import_lib = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((exports, module) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
@@ -149,31 +148,15 @@ var import_lib = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((export
 		defaultOutdent.outdent = defaultOutdent;
 	} catch (e) {}
 })))(), 1);
-let library;
-function openWebLibrary() {
-	return dlopen(resolveFfiPath(import.meta, "web"), {
-		chordsWebRunJavaScript: {
-			args: [FFIType.cstring],
-			returns: FFIType.ptr
-		},
-		chordsWebFree: {
-			args: [FFIType.ptr],
-			returns: FFIType.void
-		}
-	});
-}
-/** NUL-terminated UTF-8 for a `cstring` argument. */
-function cstr(value) {
-	return Buffer.from(`${value}\0`, "utf8");
+let addon;
+function openWebAddon() {
+	const module = { exports: {} };
+	process.dlopen(module, resolveNativeModulePath(import.meta, "web"));
+	return module.exports;
 }
 function runWebJavaScript(source) {
-	library ??= openWebLibrary();
-	const error = library.symbols.chordsWebRunJavaScript(cstr(source));
-	if (error) {
-		const message = new CString(error).toString();
-		library.symbols.chordsWebFree(error);
-		throw new Error(message);
-	}
+	addon ??= openWebAddon();
+	addon.runJavaScript(source);
 }
 function buildHandler() {
 	return async function handler(...args) {

@@ -1,4 +1,4 @@
-// Native Chromium-family browser automation used by `src/js/web.ts` through Bun FFI.
+// Native Chromium-family browser automation exported to `src/js/web.ts` through NodeSwift.
 //
 // The implementation sends the browser's `execute javascript` Apple event directly to the active
 // tab of its front window. No `osascript` helper process is involved.
@@ -7,6 +7,7 @@ import AppKit
 import Carbon
 import CoreFoundation
 import Foundation
+import NodeAPI
 
 private let supportedBrowserNames: Set<String> = [
     "Google Chrome",
@@ -32,32 +33,14 @@ private enum WebError: Error, CustomStringConvertible {
     }
 }
 
-// MARK: - C ABI
-
-/// Evaluates JavaScript in the active tab of the frontmost supported browser. Returns nil on
-/// success or a heap-allocated error message that the caller releases with `chordsWebFree`.
-@c
-public func chordsWebRunJavaScript(
-    _ source: UnsafePointer<CChar>?
-) -> UnsafeMutablePointer<CChar>? {
-    guard let source else {
-        return strdup(WebError.invalidJavaScript.description)
-    }
-
-    return autoreleasepool {
-        do {
-            try runJavaScript(String(cString: source))
-            return nil
-        } catch {
-            return strdup(describe(error))
+#NodeModule(exports: [
+    "runJavaScript": try NodeFunction { (source: String) throws in
+        try autoreleasepool {
+            try runJavaScript(source)
         }
-    }
-}
-
-@c
-public func chordsWebFree(_ message: UnsafeMutablePointer<CChar>?) {
-    free(message)
-}
+        return try NodeUndefined()
+    },
+])
 
 private func describe(_ error: Error) -> String {
     if let error = error as? WebError {
