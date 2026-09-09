@@ -1,5 +1,9 @@
 //#region package.json
 var name = "@keychord/chords-web";
+var repository = {
+	"type": "git",
+	"url": "https://github.com/KeyChord/chords-web"
+};
 var type = "module";
 var dependencies = {
 	"jquery-as-string": "^0.4.0",
@@ -12,9 +16,10 @@ var devDependencies = {
 };
 var package_default = {
 	name,
+	repository,
 	type,
 	dependencies,
 	devDependencies
 };
 //#endregion
-export { package_default as default, dependencies, devDependencies, name, type };
+export { package_default as default, dependencies, devDependencies, name, repository, type };

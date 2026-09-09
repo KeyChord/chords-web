@@ -1,4 +1,3 @@
-import { resolveNativeModulePath } from "chord";
 //#region \0rolldown/runtime.js
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -28,7 +27,7 @@ var jquery_min_default = "/*! jQuery v4.0.0 | (c) OpenJS Foundation and other co
 //#region src/js/web.ts
 /**
 * Web chord handler for Chromium-family browsers. The generated JavaScript is sent to the
-* frontmost browser by `src/swift/web/web.swift`; this file builds commands and calls its
+* frontmost browser by `Sources/KeychordChordsWebNativeWeb/web.swift`; this file builds commands and calls its
 * NodeSwift addon through Node-API.
 */
 var import_lib = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((exports, module) => {
@@ -151,7 +150,7 @@ var import_lib = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((export
 let addon;
 function openWebAddon() {
 	const module = { exports: {} };
-	process.dlopen(module, resolveNativeModulePath(import.meta, "web"));
+	process.dlopen(module, import.meta.chord.resolveNative("web"));
 	return module.exports;
 }
 function runWebJavaScript(source) {
