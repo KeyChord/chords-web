@@ -180,7 +180,7 @@ function getJavascript(...args) {
 			if (input.endsWith(".")) return import_lib.default`
           $('input[placeholder="${input}" i]').focus();
         `;
-			if (input.endsWith(",")) return "";
+			if (input.endsWith(".,")) return "";
 		}
 		default: return `console.log('unhandled type ${type}')`;
 	}
