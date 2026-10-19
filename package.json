@@ -1,0 +1,19 @@
+{
+  "name": "@keychord/chords-web",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KeyChord/chords-web"
+  },
+  "type": "module",
+  "dependencies": {
+    "jquery-as-string": "^0.4.0",
+    "outdent": "^0.8.0"
+  },
+  "devDependencies": {
+    "@keychord/chordtest": "workspace:*",
+    "@keychord/config": "catalog:",
+    "@keychord/tsconfig": "catalog:",
+    "@types/bun": "latest"
+  },
+  "packageManager": "pnpm@12.11.2"
+}
